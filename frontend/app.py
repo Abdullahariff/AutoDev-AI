@@ -1,9 +1,20 @@
 import streamlit as st
 import requests
+
+# --- NEW LOGIC: Backend URL Setup ---
+try:
+    # Fetch Render URL from Streamlit Secrets in cloud environment
+    BACKEND_URL = st.secrets["API_URL"]
+except:
+    # Fallback to localhost for local development
+    BACKEND_URL = "http://127.0.0.1:8000"
+# -------------------------------------
+
 password = st.text_input("Enter Password to access AutoDev AI", type="password")
 if password != "dafinitiq2026":
     st.warning("Please enter the correct password.")
     st.stop()
+
 # Configure the Streamlit page
 st.set_page_config(page_title="AutoDev AI Pipeline", layout="centered")
 
@@ -29,16 +40,16 @@ if st.button("Generate Code", type="primary"):
         st.session_state.user_prompt = prompt_input
         with st.spinner("Agents are working on your request. Please wait..."):
             try:
-                # Call the backend execution endpoint
+                # NEW CHANGE: Replaced hardcoded localhost with BACKEND_URL variable
                 response = requests.post(
-                    "http://127.0.0.1:8000/api/generate-code", 
+                    f"{BACKEND_URL}/api/generate-code", 
                     json={"requirement": prompt_input}
                 )
                 
                 if response.status_code == 200:
                     data = response.json()
                     
-                    # Naya Logic: Guardrail rejection check
+                    # Guardrail rejection check
                     if data.get("status") == "rejected":
                         st.error(data.get("message"))
                     else:
@@ -75,8 +86,8 @@ if st.session_state.final_code:
             
             with st.spinner("Saving to Supabase..."):
                 try:
-                    # Call the backend save endpoint
-                    save_res = requests.post("http://127.0.0.1:8000/api/save-code", json=save_payload)
+                    # NEW CHANGE: Replaced hardcoded localhost with BACKEND_URL variable
+                    save_res = requests.post(f"{BACKEND_URL}/api/save-code", json=save_payload)
                     
                     if save_res.status_code == 200:
                         st.success("Approved! Ready for Supabase. Data successfully saved! 🎉")
